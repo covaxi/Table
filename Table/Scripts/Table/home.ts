@@ -1,0 +1,1 @@
+﻿ReactDOM.render(controls.Picker, $("#reactplaceholder")[0]);
