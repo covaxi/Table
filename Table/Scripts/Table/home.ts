@@ -1,1 +1,1 @@
-﻿ReactDOM.render(controls.Picker, $("#reactplaceholder")[0]);
+﻿$(document).ready(() => ReactDOM.render(controls.Lines({}), $("#reactplaceholder")[0]));
