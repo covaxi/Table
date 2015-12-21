@@ -20,72 +20,77 @@ namespace Table.Controllers
 		/// <returns>List of TableLIne objects</returns>
 		public IEnumerable<LineDTO> Get(DateTime? start = null, DateTime? end = null)
 		{
-			try
+			var res = DB.Execute(db =>
 			{
-
-
-				var res = DB.Execute(db =>
-				{
-					start = start?.Date;
-					end = end?.Date.AddDays(1);
-					return db.Lines
-						.Get(line => (start == null || line.Date >= start) && (end == null || line.Date <= end))
-						.ToList()
-						.Select(l => l.ToDTO());
-				});
-				Console.WriteLine(res);
-				return res;
-			}
-			catch(Exception ex)
-			{
-				Console.WriteLine(ex);
-			}
-			return null;
+				start = start?.Date;
+				end = end?.Date.AddDays(1);
+				return db.Lines
+					.Get(line => (start == null || line.Date >= start) && (end == null || line.Date <= end))
+					.ToList()
+					.Select(l => l.ToDTO());
+			});
+			Console.WriteLine(res);
+			return res;
 		}
 
 		/// <summary>
 		/// Add new object
 		/// </summary>
 		/// <returns>Created object</returns>
-		public LineDTO Post()
+		public IEnumerable<ActionResult> Post([FromBody]IEnumerable<ActionDTO> actions)
 		{
 			return DB.Execute(db =>
 			{
-				var line = db.Lines.Add();
+				var dict = new Dictionary<int, Line>();
+				foreach (var value in actions.GroupBy(a => a.Id).Select(SimplifyOperations))
+				{
+					switch(value.ActionType)
+					{
+						case ActionType.Delete:
+							db.Lines.Delete(value.Id);
+							break;
+						case ActionType.Add:
+							{
+								var line = db.Lines.Add();
+								line.Text = value.Text;
+								line.Date = value.Date;
+								dict[value.Id] = line;
+								break;
+							}
+						case ActionType.Modify:
+							{
+								var line = db.Lines.Get(value.Id);
+								line.Text = value.Text;
+								line.Date = value.Date;
+								break;
+							}
+						default:
+							throw new HttpResponseException(HttpStatusCode.BadRequest);
+					}
+				}
 				db.SaveChanges();
-				return line.ToDTO();
+				return dict.Select(kv => new ActionResult { OldId = kv.Key, NewId = kv.Value.Id });
 			});
 		}
 
-		/// <summary>
-		/// Modify object 
-		/// </summary>
-		/// <param name="id">Id of the object</param>
-		/// <param name="modified">Modified object.</param>
-		public void Put(int id, [FromBody]LineDTO modified)
+		private ActionDTO SimplifyOperations(IGrouping<int, ActionDTO> g)
 		{
-			if (id != modified.Id)
-				// throw new Exception("Тревога тревога волк унёс зайчат");
-				throw new HttpResponseException(new HttpResponseMessage(HttpStatusCode.Conflict));
-
-			DB.Execute(db =>
+			ActionDTO result;
+			if (g.Any(a => a.ActionType == ActionType.Delete && g.Key > 0))
+				result = new ActionDTO { Id = g.Key, ActionType = ActionType.Delete };
+			else if (g.Any(a => a.ActionType == ActionType.Add && g.Key < 0))
 			{
-				db.Lines.Update(modified.ToModel());
-				db.SaveChanges();
-			});
-		}
-
-		/// <summary>
-		/// Delete object
-		/// </summary>
-		/// <param name="id">Id of the object</param>
-		public void Delete(int id)
-		{
-			DB.Execute(db =>
+				var last = g.LastOrDefault(a => a.ActionType == ActionType.Modify);
+				result = new ActionDTO { Id = g.Key, ActionType = ActionType.Add, Text = last.Text, Date = last.Date };
+			}
+			else if (g.Key > 0)
 			{
-				db.Lines.Delete(id);
-				db.SaveChanges();
-			});
+				var last = g.Last(a => a.ActionType == ActionType.Modify);
+				result = new ActionDTO { Id = g.Key, ActionType = ActionType.Modify, Text = last.Text, Date = last.Date };
+			}
+			else
+				throw new HttpResponseException(HttpStatusCode.BadRequest);
+			return result;
 		}
 	}
 }

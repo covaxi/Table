@@ -14,7 +14,7 @@ namespace Table.Data
 		public int Id { get; set; }
 
 		[Index]
-		public DateTime Date { get; set; }
+		public DateTime? Date { get; set; }
 
 		public string Text { get; set; }
 	}

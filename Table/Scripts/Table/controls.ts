@@ -2,10 +2,10 @@
 
     // ============================================================================================================
 
-    interface IDatePickerProps extends React.Props<any> {
+    interface IDatePickerProps extends React.Props<any>, React.HTMLAttributes {
         id: string,
-        value? : Date,
-        onDateChanged: (d: Date) => any
+        dateValue? : Date,
+        onDateChanged: (d: Date) => any,
     }
 
 
@@ -15,7 +15,7 @@
 
         id_selector = () => "#" + this.props.id;
 
-        render() { return React.DOM.input({ type: "text", id: this.props.id }, null); }
+        render() { return React.DOM.input($.extend({ type: "text" }, this.props), null); }
 
         componentDidMount() { this._init(); }
 
@@ -35,8 +35,8 @@
                     this.props.onDateChanged($(this.id_selector()).datepicker('getDate'));
                 }.bind(this),
             });
-            if (this.props.value) {
-                dp.datepicker('setDate', new Date(this.props.value.toString()));
+            if (this.props.dateValue) {
+                dp.datepicker('setDate', new Date(this.props.dateValue.toString()));
             }
         }
     };
@@ -46,13 +46,36 @@
     }
 
     // ============================================================================================================
+    class ColorPickerClass extends React.Component<React.Props<any>,  {}>{
+        render() { return React.DOM.input($.extend({ type: "color" }, this.props), null); }
+    }
+
+    export function ColorPicker(props:any) {
+        return React.createElement(ColorPickerClass, props, {});
+    }
+    // ============================================================================================================
+    class FontPickerClass extends React.Component<React.Props<any>, {}> implements React.HTMLAttributes {
+        render() {
+            var fonts = ["Arial", "Serif", "Sans-Serif", "Tahoma", "Verdana", "Lucida Sans Unicode"].map(f => React.DOM.option({ key: f, id: f }, f));
+            return React.DOM.select(this.props, fonts);
+        }
+    }
+
+    export function FontPicker(props:any) {
+        return React.createElement(FontPickerClass, props, {});
+    }
+
+    // ============================================================================================================
 
     interface ILineProps extends React.Props<any> {
         id: number;
         text?: string;
         date?: Date;
-        onTextChanged: (id: number, text: string) => void
-        onDateChanged: (id:number, date: Date) => void
+        onTextChanged: (id: number, text: string) => void;
+        onDateChanged: (id: number, date: Date) => void;
+        onDelete: (id: number) => void;
+        font: string;
+        color: string;
     }
 
     class LineClass extends React.Component<ILineProps, {}> {
@@ -61,25 +84,30 @@
         }
 
         private _handleTextChange(event) { this.props.onTextChanged(this.props.id, event.target.value); }
+        private _handleDelete(id) { this.props.onDelete(this.props.id); }
 
         render() {
-            return React.DOM.tr({ key: this.props.id }, [
-                React.DOM.td({ key: "date" }, DatePicker({
+            return React.DOM.tr({ key: this.props.id, className: "row" }, 
+                React.DOM.td({ key: "line" + this.props.id }, React.DOM.div({}, DatePicker({
                     id: "line" + this.props.id,
-                    value: this.props.date,
+                    dateValue: this.props.date,
+                    className: "form-control square-border",
                     onDateChanged: function (d) {
                         this.props.onDateChanged(this.props.id, d);
                     }.bind(this)
-                })),
-                React.DOM.td({ key: "desc" }, React.DOM.input({
-                    key: "text",
+                }))),
+                React.DOM.td({ key: "text" }, React.DOM.div({}, React.DOM.input({
                     type: "text",
                     value: this.props.text,
+                    className: "form-control square-border",
+                    style: { fontFamily: this.props.font, color: this.props.color },
                     onChange: function (event) {
                         this.props.onTextChanged(this.props.id, event.target.value);
-                    }.bind(this),
-                }, null)),
-            ]);
+                    }.bind(this)
+                }))),
+                React.DOM.td({ key: "del" }, React.DOM.button({ key: "del", className: "btn btn-default square-border", type: "button", onClick: this._handleDelete.bind(this) },
+                    React.DOM.i({ className: "glyphicon glyphicon-remove" }, null)))
+            );
         }
     }
 
@@ -89,30 +117,25 @@
 
     // ============================================================================================================
 
-    interface ILinesProps extends React.Props<any> {
-    }
-
-
-
     interface ILinesState {
         startDate: Date;
         endDate: Date;
-        color: number;
-        font: number; 
+        color: string;
+        font: string; 
         data: api.ILineData[];
         hash: { [key: number]: api.ILineData };
     }
 
-    class LinesClass extends React.Component<ILinesProps, ILinesState> {
+    class LinesClass extends React.Component<React.Props<any>, ILinesState> {
         constructor(props) {
             super(props);
             this.state = {
                 startDate: null,
                 endDate: null,
-                color: 0,
-                font: 0,
                 data: [], 
                 hash: {},
+                color: "#000000",
+                font: "Arial",
             };
         }
 
@@ -126,6 +149,24 @@
             this.setState(this.state);
         }
 
+        _handleStartDateChange(id: number, date: Date) {
+            this.state.startDate = date;
+            this.setState(this.state);
+        }
+
+        _handleEndDateChange(id: number, date: Date) {
+            this.state.endDate = date;
+            this.setState(this.state);
+        }
+
+        _handleDelete(id: number) {
+            this.state.data = this.state.data.filter(d => d.id != id);
+            this.setState(this.state);
+            api.del(id, res => {
+                console.log(res);
+            });
+        }
+
         _handleClick() {
             api.getAll(this.state.startDate, this.state.endDate, (d) => {
                 this.state.data = d;
@@ -135,30 +176,58 @@
             });
         }
 
+        _handleColorChange(e) {
+            this.state.color = e.target.value;
+            this.setState(this.state);
+        }
+
+        _handleFontChange(e) {
+            this.state.font = e.target.value;
+            this.setState(this.state);
+        }
+
         render() {
-            return React.DOM.div({ key: "div" }, [
-                DatePicker({ id: "dpStart", onDateChanged: this._handleDateChange.bind(this) }),
-                DatePicker({ id: "dpEnd", onDateChanged: this._handleDateChange.bind(this) }),
-                React.DOM.span({ key: "span" }, "color" ),
-                React.DOM.span({ key: "span2" }, "text" ),
-                React.DOM.button({
-                    key: "go",
-                    onClick: this._handleClick.bind(this),
-                }),
-                React.DOM.table({ key: "table" }, React.DOM.tbody({ key: "tbody" },
-                    this.state.data.map(row => {
-                        console.log(row.date);
+            var child = null;
+            if (this.state.data.length > 0) {
+                child = [React.DOM.table({ key: "tbl", className: "container w800" },
+                    React.DOM.thead({ key: "th" }, React.DOM.tr({ key: "tr", className: "row" },
+                        React.DOM.th({ key: "date", className: "col-md-3" }, "Date"),
+                        React.DOM.th({ key: "text", className: "col-md-8" }, "Text"),
+                        React.DOM.th({ key: "del", className: "col-md-1" }, "")
+                        )),
+
+                    React.DOM.tbody({ key: "tb" }, this.state.data.map(row => {
                         return Line({
                             id: row.id,
                             key: row.id,
                             text: row.text,
                             date: row.date,
+                            font: this.state.font,
+                            color: this.state.color,
                             onTextChanged: this._handleTextChange.bind(this),
                             onDateChanged: this._handleDateChange.bind(this),
-                        });
-                    })
-                ))
-            ]);
+                            onDelete: this._handleDelete.bind(this),
+                        })
+                    }))
+                    ),
+                    React.DOM.button({ key: "add", className: "btn btn-default", type: "button" }, "Add another line")];
+            }
+            return React.DOM.form({ className: "form-horizontal" },
+                React.DOM.div({ key: "main", className: "container jumbotron w800", role: "form" },
+                    React.DOM.div({ key: "start", className: "form-group" },
+                        React.DOM.div({ key: "sd", className: "col-md-3" }, DatePicker({ id: "sd", className: "form-control", placeholder: "Start Date", onDateChanged: this._handleStartDateChange.bind(this) })),
+                        React.DOM.div({ key: "ed", className: "col-md-3" }, DatePicker({ id: "ed", className: "form-control", placeholder: "End Date", onDateChanged: this._handleEndDateChange.bind(this) })),
+                        React.DOM.div({ key: "fn", className: "col-md-2" }, FontPicker({ key: "fn", className: "form-control", value: this.state.font, onChange: this._handleFontChange.bind(this) })),
+                        React.DOM.div({ key: "cl", className: "col-md-2" }, ColorPicker({ key: "cl", className: "form-control", value: this.state.color, onChange: this._handleColorChange.bind(this) } )),
+                        React.DOM.button({
+                            key: "go",
+                            type: "button",
+                            className: "btn btn-default",
+                            onClick: this._handleClick.bind(this),
+                        }, "Populate"))
+                    ),
+                child
+            );
         }
     }
 

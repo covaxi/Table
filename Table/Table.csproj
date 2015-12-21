@@ -138,6 +138,9 @@
     <EmbeddedResource Include="Migrations\201512200039006_Initial.resx">
       <DependentUpon>201512200039006_Initial.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201512211442212_nullables.resx">
+      <DependentUpon>201512211442212_nullables.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
@@ -160,7 +163,12 @@
     <Compile Include="Migrations\201512200039006_Initial.Designer.cs">
       <DependentUpon>201512200039006_Initial.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201512211442212_nullables.cs" />
+    <Compile Include="Migrations\201512211442212_nullables.Designer.cs">
+      <DependentUpon>201512211442212_nullables.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="Models\Action.cs" />
     <Compile Include="Models\LineVM.cs" />
     <Compile Include="Data\ModelExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -266,7 +274,6 @@
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Task\Index.cshtml" />
-    <Content Include="Views\Task\Description.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\Defs\bootstrap.d.ts" />

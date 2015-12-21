@@ -18,7 +18,7 @@ namespace Table.Models
 		/// <summary>
 		/// Дата
 		/// </summary>
-		public DateTime Date { get; set; }
+		public DateTime? Date { get; set; }
 		/// <summary>
 		/// Набор различных букв и символов
 		/// </summary>
