@@ -56,7 +56,7 @@
     // ============================================================================================================
     class FontPickerClass extends React.Component<React.Props<any>, {}> implements React.HTMLAttributes {
         render() {
-            var fonts = ["Arial", "Serif", "Sans-Serif", "Tahoma", "Verdana", "Lucida Sans Unicode"].map(f => React.DOM.option({ key: f, id: f }, f));
+            var fonts = ["Arial", "Serif", "Sans-Serif", "Tahoma", "Verdana", "Lucida Sans Unicode"].map(f => React.DOM.option({ key: f, id: f, value: f }, f));
             return React.DOM.select(this.props, fonts);
         }
     }
@@ -129,13 +129,14 @@
     class LinesClass extends React.Component<React.Props<any>, ILinesState> {
         constructor(props) {
             super(props);
+            var cookie = $.extend({ startDate: null, endDate: null, color: "#000000", font: "Arial" }, JSON.parse(this._getCookie()));
             this.state = {
-                startDate: null,
-                endDate: null,
+                startDate: cookie.startDate,
+                endDate: cookie.endDate,
                 data: [], 
                 hash: {},
-                color: "#000000",
-                font: "Arial",
+                color: cookie.color,
+                font: cookie.font,
             };
             api.registerCallback(this._callback.bind(this));
         }
@@ -152,14 +153,40 @@
             api.modify(this.state.hash[id]);
         }
 
+        _getCookie() {
+            var name = "state=";
+            var ca = document.cookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1);
+                if (c.indexOf(name) == 0) return c.substring(name.length, c.length);
+            }
+            return "";
+        }
+
+        _saveCookie() {
+            var c = {
+                color: this.state.color,
+                font: this.state.font,
+                start: this.state.startDate,
+                end: this.state.endDate
+            };
+            var d = new Date()
+            d.setTime(d.getTime() + (14 * 24 * 60 * 60 * 1000));
+            document.cookie = "state=" + JSON.stringify(c) + "; expires=" + d.toUTCString();
+        }
+
         _handleStartDateChange(date: Date) {
             this.state.startDate = date;
             this.setState(this.state);
+            this._saveCookie();
         }
 
         _handleEndDateChange(date: Date) {
             this.state.endDate = date;
             this.setState(this.state);
+            this._saveCookie();
+
         }
 
         _handleDelete(id: number) {
@@ -180,11 +207,14 @@
         _handleColorChange(e) {
             this.state.color = e.target.value;
             this.setState(this.state);
+            this._saveCookie();
+
         }
 
         _handleFontChange(e) {
             this.state.font = e.target.value;
             this.setState(this.state);
+            this._saveCookie();
         }
 
         _handleAdd(e) {
