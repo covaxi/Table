@@ -81,7 +81,7 @@ namespace Table.Controllers
 			else if (g.Any(a => a.ActionType == ActionType.Add && g.Key < 0))
 			{
 				var last = g.LastOrDefault(a => a.ActionType == ActionType.Modify);
-				result = new ActionDTO { Id = g.Key, ActionType = ActionType.Add, Text = last.Text, Date = last.Date };
+				result = new ActionDTO { Id = g.Key, ActionType = ActionType.Add, Text = last?.Text, Date = last?.Date };
 			}
 			else if (g.Key > 0)
 			{

@@ -142,11 +142,13 @@
         _handleTextChange(id: number, text: string) {
             this.state.hash[id].text = text;
             this.setState(this.state);
+            api.modify(this.state.hash[id]);
         }
 
         _handleDateChange(id: number, date: Date) {
             this.state.hash[id].date = date;
             this.setState(this.state);
+            api.modify(this.state.hash[id]);
         }
 
         _handleStartDateChange(id: number, date: Date) {
@@ -167,7 +169,7 @@
             });
         }
 
-        _handleClick() {
+        _handlePopulateClick() {
             api.getAll(this.state.startDate, this.state.endDate, (d) => {
                 this.state.data = d;
                 this.state.hash = {};
@@ -184,6 +186,24 @@
         _handleFontChange(e) {
             this.state.font = e.target.value;
             this.setState(this.state);
+        }
+
+        _handleAdd(e) {
+            var i = Math.min.apply(null, this.state.data.map(d => d.id)) - 1;
+            if (i >= 0)
+                i = -1;
+            
+            var obj = { id: i };
+            this.state.data.push(obj);
+            this.state.hash[i] = obj;
+            this.setState(this.state);
+            api.add(i, (r: api.IApiResult[]) => {
+                r.forEach(x => {
+                    this.state.hash[x.oldId] = this.state.hash[x.newId];
+                    this.state.data.filter(d => d.id == x.oldId)[0].id = x.newId;
+                })
+                this.setState(this.state);
+            });
         }
 
         render() {
@@ -210,7 +230,7 @@
                         })
                     }))
                     ),
-                    React.DOM.button({ key: "add", className: "btn btn-default", type: "button" }, "Add another line")];
+                    React.DOM.button({ key: "add", className: "btn btn-default", type: "button", onClick: this._handleAdd.bind(this) }, "Add another line")];
             }
             return React.DOM.form({ className: "form-horizontal" },
                 React.DOM.div({ key: "main", className: "container jumbotron w800", role: "form" },
@@ -223,7 +243,7 @@
                             key: "go",
                             type: "button",
                             className: "btn btn-default",
-                            onClick: this._handleClick.bind(this),
+                            onClick: this._handlePopulateClick.bind(this),
                         }, "Populate"))
                     ),
                 child
