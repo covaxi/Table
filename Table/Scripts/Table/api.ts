@@ -1,5 +1,11 @@
 ﻿module api {
 
+    export enum ActionType {
+        Add,
+        Delete,
+        Modify
+    }
+
     export interface ILineData {
         id: number;
         text: string;
@@ -17,18 +23,19 @@
             contentType: "application/json; charset=utf-8",
             dataType: "json",
             data: { startDate: startDate, endDate: endDate },
-            success: callback
+            success: callback,
         });
     }
 
     export function del(id: number, callback: (IApiResult) => any) {
+        console.log([{ id: id, actionType: ActionType.Delete }]);
         $.ajax({
             url: '/api/Values',
             type: "POST",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
-            data: [{ id: id, action: "Delete" }],
-            success: callback
+            data: JSON.stringify([{ id: id, actionType: ActionType.Delete }]),
+            success: callback,
         });
     }
 }

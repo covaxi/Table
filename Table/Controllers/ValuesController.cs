@@ -37,7 +37,7 @@ namespace Table.Controllers
 		/// Add new object
 		/// </summary>
 		/// <returns>Created object</returns>
-		public IEnumerable<ActionResult> Post([FromBody]IEnumerable<ActionDTO> actions)
+		public IEnumerable<ActionResult> Post(IEnumerable<ActionDTO> actions)
 		{
 			return DB.Execute(db =>
 			{
