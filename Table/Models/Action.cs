@@ -8,9 +8,9 @@ namespace Table.Models
 {
 	public enum ActionType
 	{
-		Add,
-		Delete,
-		Modify
+		Add = 0,
+		Delete = 1, 
+		Modify = 2
 	}
 
 	public class ActionResult

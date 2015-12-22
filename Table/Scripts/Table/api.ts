@@ -17,47 +17,62 @@
         newId: number;
     }
 
-    export function getAll(startDate: Date, endDate: Date, callback: (ILineData) => any) {
-        $.ajax({
-            type: "GET",
-            url: '/api/Values',
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            data: { startDate: startDate, endDate: endDate },
-            success: callback,
-        });
+    var callback;
+    var timer;
+
+    export function registerCallback(cb) {
+        callback = cb;
+        timer = window.setInterval(timerHandler, 1000);
     }
 
-    export function del(id: number, callback: (IApiResult) => any) {
-        $.ajax({
-            url: '/api/Values',
-            type: "POST",
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            data: JSON.stringify([{ id: id, actionType: ActionType.Delete }]),
-            success: callback,
-        });
+    function restartTimer() {
+        window.clearInterval(timer);
+        timer = window.setInterval(timerHandler, 1000);
     }
 
-    export function add(id: number, callback: (IApiResult) => any) {
-        $.ajax({
-            url: '/api/Values',
-            type: "POST",
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            data: JSON.stringify([{ id: id, actionType: ActionType.Add }]),
-            success: callback,
-        });
+    interface IApiRequest {
+        id: number;
+        action: ActionType;
+        text?: string;
+        date?: Date
+    }
+
+    var queue = [];
+
+    export function getAll(startDate: Date, endDate: Date, cb: (ILineData) => any) {
+        timerHandler();
+        $.get('/api/Values', {
+            start: startDate ? startDate.toJSON() : null,
+            end: endDate ? endDate.toJSON() : null
+        }, cb);
+    }
+
+    function timerHandler() {
+        if (queue.length) {
+            $.ajax({
+                url: '/api/Values',
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify(queue),
+                success: callback,
+            });
+        }
+        queue = [];
+    }
+
+    export function del(id: number) {
+        queue.push({ id: id, actionType: ActionType.Delete });
+        restartTimer();
+    }
+
+    export function add(id: number) {
+        queue.push({ id: id, actionType: ActionType.Add });
+        restartTimer();
     }
 
     export function modify(data: ILineData) {
-        $.ajax({
-            url: '/api/Values',
-            type: "POST",
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            data: JSON.stringify([{ id: data.id, actionType: ActionType.Modify, text: data.text, date: data.date }]),
-            success: function() {},
-        });
+        queue.push({ id: data.id, actionType: ActionType.Modify, text: data.text, date: data.date });
+        restartTimer();
     }
 }

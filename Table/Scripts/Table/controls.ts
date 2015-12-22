@@ -13,7 +13,7 @@
 
         constructor(props) { super(props); }
 
-        id_selector = () => "#" + this.props.id;
+        id_selector = () => ("#" + this.props.id).replace("-", "_");
 
         render() { return React.DOM.input($.extend({ type: "text" }, this.props), null); }
 
@@ -137,6 +137,7 @@
                 color: "#000000",
                 font: "Arial",
             };
+            api.registerCallback(this._callback.bind(this));
         }
 
         _handleTextChange(id: number, text: string) {
@@ -151,12 +152,12 @@
             api.modify(this.state.hash[id]);
         }
 
-        _handleStartDateChange(id: number, date: Date) {
+        _handleStartDateChange(date: Date) {
             this.state.startDate = date;
             this.setState(this.state);
         }
 
-        _handleEndDateChange(id: number, date: Date) {
+        _handleEndDateChange(date: Date) {
             this.state.endDate = date;
             this.setState(this.state);
         }
@@ -164,9 +165,7 @@
         _handleDelete(id: number) {
             this.state.data = this.state.data.filter(d => d.id != id);
             this.setState(this.state);
-            api.del(id, res => {
-                console.log(res);
-            });
+            api.del(id);
         }
 
         _handlePopulateClick() {
@@ -197,13 +196,15 @@
             this.state.data.push(obj);
             this.state.hash[i] = obj;
             this.setState(this.state);
-            api.add(i, (r: api.IApiResult[]) => {
-                r.forEach(x => {
-                    this.state.hash[x.oldId] = this.state.hash[x.newId];
-                    this.state.data.filter(d => d.id == x.oldId)[0].id = x.newId;
-                })
-                this.setState(this.state);
-            });
+            api.add(i);
+        }
+
+        _callback(data: api.IApiResult[]) {
+            data.forEach(x => {
+                this.state.hash[x.newId] = this.state.hash[x.oldId];
+                this.state.data.filter(d => d.id == x.oldId)[0].id = x.newId;
+            })
+            this.setState(this.state);
         }
 
         render() {
