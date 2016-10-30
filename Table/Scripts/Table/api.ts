@@ -41,7 +41,7 @@
 
     export function getAll(startDate: Date, endDate: Date, cb: (ILineData) => any) {
         timerHandler();
-        $.get('/api/Values', {
+        $.get('/Table/api/Values', {
             start: startDate ? startDate.toJSON() : null,
             end: endDate ? endDate.toJSON() : null
         }, cb);
@@ -50,7 +50,7 @@
     function timerHandler() {
         if (queue.length) {
             $.ajax({
-                url: '/api/Values',
+                url: '/Table/api/Values',
                 type: "POST",
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",

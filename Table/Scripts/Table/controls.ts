@@ -129,7 +129,10 @@
     class LinesClass extends React.Component<React.Props<any>, ILinesState> {
         constructor(props) {
             super(props);
-            var cookie = $.extend({ startDate: null, endDate: null, color: "#000000", font: "Arial" }, JSON.parse(this._getCookie()));
+            var cookie = { startDate: null, endDate: null, color: "#000000", font: "Arial" }
+            if (this._getCookie()) {
+                cookie = $.extend(cookie, JSON.parse(this._getCookie()));
+            }
             this.state = {
                 startDate: cookie.startDate,
                 endDate: cookie.endDate,
