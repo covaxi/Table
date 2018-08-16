@@ -54,7 +54,7 @@
         return React.createElement(ColorPickerClass, props, {});
     }
     // ============================================================================================================
-    class FontPickerClass extends React.Component<React.Props<any>, {}> implements React.HTMLAttributes {
+    class FontPickerClass extends React.Component<React.Props<any>, {}>{
         render() {
             var fonts = ["Arial", "Serif", "Sans-Serif", "Tahoma", "Verdana", "Lucida Sans Unicode"].map(f => React.DOM.option({ key: f, id: f, value: f }, f));
             return React.DOM.select(this.props, fonts);
